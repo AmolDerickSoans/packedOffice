@@ -1,0 +1,247 @@
+<!--The content below is only a placeholder and can be replaced.-->
+<div class="text-center">
+  <h2>Welcome to MeetingRoom!</h2>
+
+  <div>
+    <div class="container" >
+
+       
+            <div *ngFor="let meetingRoom of meetingRooms.floor0" class="box white" (click)="viewRoomSchedule(meetingRoom.id)">
+            </div>
+        <!-- (click)="viewRoomSchedule(meetingRoom.id)" -->
+        <!-- <input type="text" placeholder="Text field"> -->
+
+      <!-- <div class="box pink" (click)="viewRoomSchedule('conferenceRoom2')"></div>
+      <div class="box white"></div>
+      <div class="box white"></div>
+      <div class="box white"></div>
+      <div class="box orange"></div>
+      <div class="box white"></div>
+      <div class="box white"></div>
+      <div class="box white"></div> -->
+    </div>
+  
+  </div>
+
+
+  <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()">
+    <label>Date:</label>
+    <input type="date" formControlName="date" />
+    <div
+      *ngIf="bookingForm.get('date').invalid && bookingForm.get('date').touched"
+    >
+      <p *ngIf="bookingForm.get('date').errors?.required">Date is required.</p>
+      <p *ngIf="bookingForm.get('date').errors?.invalidDate">
+        Date should be current date or within 2 weeks.
+      </p>
+    </div>
+
+    <label>Start Time:</label>
+    <input type="time" formControlName="starttime" step="900" />
+    <div
+      *ngIf="bookingForm.get('starttime').invalid && bookingForm.get('starttime').touched"
+    >
+      <p>Time is required.</p>
+    </div>
+
+    <label>End Time:</label>
+    <input type="time" formControlName="endtime" step="900" />
+    <div
+      *ngIf="bookingForm.get('endtime').invalid && bookingForm.get('endtime').touched"
+    >
+      <p>Time is required.</p>
+    </div>
+
+
+    <label>Team name</label>
+    <input type="text" formControlName="room" />
+    <div
+      *ngIf="bookingForm.get('room').invalid && bookingForm.get('room').touched"
+    >
+      <p>Room number is required.</p>
+    </div>
+
+    <label>Meeting Description:</label>
+    <textarea formControlName="description"></textarea>
+    <div
+      *ngIf="
+        bookingForm.get('description').invalid &&
+        bookingForm.get('description').touched
+      "
+    >
+      <p>Description is required.</p>
+    </div>
+
+    <button type="submit" [disabled]="!bookingForm.valid">Submit</button>
+  </form>
+
+  <div *ngIf="bookings.length > 0">
+    <h2>Bookings:</h2>
+    <ul>
+      <li *ngFor="let booking of bookings">
+        <strong>Date:</strong> {{ booking.date }}<br />
+        <strong>Time:</strong> {{ booking.starttime }}<br />
+        <strong>Room:</strong> {{ booking.room }}<br />
+        <strong>Description:</strong> {{ booking.description }}
+      </li>
+    </ul>
+  </div>
+</div>
+
+<mat-progress-spinner
+  *ngIf="!events"
+  color="primary"
+  mode="indeterminate"
+  class="mx-auto mt-5"
+>
+</mat-progress-spinner>
+
+<div class="calendar-container" *ngIf="events">
+  <div class="row mt-4">
+    <div class="col-md-4 text-left">
+      <!--<button type="button" routerLink="add" class="btn btn-light m-1" *ngIf="isAdmin">
+              Aggiungi
+          </button>-->
+      <!--<div class="btn-group">
+              <button type="button" class="btn btn-primary"
+                  (click)="changeView('month')"
+                  [class.active]="view === 'month'">
+                  Mese
+              </button>
+              <button type="button" class="btn btn-primary"
+                  (click)="changeView('week')"
+                  [class.active]="view === 'week'">
+                  Settimana
+              </button>
+              <button type="button" class="btn btn-primary"
+                  (click)="changeView('day')"
+                  [class.active]="view === 'day'">
+                  Giorno
+              </button>
+          </div>-->
+    </div>
+    <div class="col-md-4 text-center">
+      <h3 class="mt-0">
+        {{
+          viewDate
+            | calendarSchedulerDate
+              : view + 'ViewTitle'
+              : locale
+              : weekStartsOn
+              : excludeDays
+              : viewDays
+              : startsWithToday
+        }}
+      </h3>
+      <select
+        #viewDayOptionSelect1
+        class="form-select d-none d-md-block d-xl-none"
+        [ngModel]="viewDays"
+        (change)="viewDaysOptionChanged(viewDayOptionSelect1.value)"
+      >
+        <option [value]="1">Day View</option>
+        <option [value]="3">3 Day View</option>
+        <option [value]="7">Week View</option>
+      </select>
+    </div>
+    <div class="col-md-4 text-right">
+      <div class="row">
+        <div
+          class="col-6 d-md-none d-xl-flex col-xl-6 valign-center text-right"
+        >
+          <select
+            #viewDayOptionSelect2
+            class="form-select m-1"
+            [ngModel]="viewDays"
+            (change)="viewDaysOptionChanged(viewDayOptionSelect2.value)"
+          >
+            <option [value]="1">Day View</option>
+            <option [value]="3">3 Day View</option>
+            <option [value]="7">Week View</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-12 col-xl-6">
+          <div class="btn-group m-1" role="group">
+            <button
+              type="button"
+              class="btn btn-primary"
+              mwlCalendarPreviousView
+              [view]="view"
+              [(viewDate)]="viewDate"
+              [daysInWeek]="viewDays"
+              [excludeDays]="excludeDays"
+              [disabled]="prevBtnDisabled"
+              (viewDateChange)="dateOrViewChanged()"
+            >
+              <span class="valign-center">
+                <i title="Precedente" class="material-icons md-18"
+                  >keyboard_arrow_left</i
+                >
+              </span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-light"
+              mwlCalendarToday
+              [(viewDate)]="viewDate"
+              (viewDateChange)="dateOrViewChanged()"
+            >
+              <span class="valign-center">
+                <i title="Oggi" class="material-icons md-18">today</i>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              mwlCalendarNextView
+              [view]="view"
+              [(viewDate)]="viewDate"
+              [daysInWeek]="viewDays"
+              [excludeDays]="excludeDays"
+              [disabled]="nextBtnDisabled"
+              (viewDateChange)="dateOrViewChanged()"
+            >
+              <span class="valign-center">
+                <i title="Successivo" class="material-icons md-18"
+                  >keyboard_arrow_right</i
+                >
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br />
+  <div [ngSwitch]="view">
+    <calendar-scheduler-view
+      *ngSwitchCase="CalendarView.Week"
+      [viewDays]="viewDays"
+      [viewDate]="viewDate"
+      [events]="events"
+      [locale]="locale"
+      [responsive]="false"
+      [weekStartsOn]="weekStartsOn"
+      [excludeDays]="excludeDays"
+      [startsWithToday]="startsWithToday"
+      [hourSegments]="hourSegments"
+      [dayStartHour]="dayStartHour"
+      [dayEndHour]="dayEndHour"
+      [dayModifier]="dayModifier"
+      [hourModifier]="hourModifier"
+      [segmentModifier]="segmentModifier"
+      [eventModifier]="eventModifier"
+      [showEventActions]="true"
+      [showSegmentHour]="true"
+      [zoomEventOnHover]="true"
+      (viewDaysChanged)="viewDaysChanged($event)"
+      (dayHeaderClicked)="dayHeaderClicked($event.day)"
+      (hourClicked)="hourClicked($event.hour)"
+      (segmentClicked)="segmentClicked('Clicked', $event.segment)"
+      (eventClicked)="eventClicked('Clicked', $event.event)"
+      (eventTimesChanged)="eventTimesChanged($event)"
+      [refresh]="refresh"
+    >
+    </calendar-scheduler-view>
+  </div>
+</div>
