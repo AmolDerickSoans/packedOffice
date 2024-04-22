@@ -47,33 +47,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 export class AppComponent implements OnInit {
   bookingForm: FormGroup;
   bookings: any[] = [];
-  selectedFloor = 'floor0';
-  meetingRooms:any = 
-    {
-     
-      floor0: [
-        { id: 'meetingRoom1', name: 'Meeting Room 1' ,availableClass : 'green' },
-        { id: 'meetingRoom2', name: 'Meeting Room 2' ,availableClass : 'green'},
-        { id: 'meetingRoom3', name: 'Meeting Room 3' ,availableClass : 'green'},
-        { id: 'conferenceRoom1', name: 'Conference Room 1' ,availableClass : 'green'},
-        {id: 'phoneBooth1' , name: 'Phone Booth 1',availableClass : 'green'},
-        {id: 'phoneBooth2', name: 'Phone Booth 2',availableClass : 'green'}
-      ],
-      floor1: [
-        { id: 'conferenceRoom1', name: 'Conference Room 1' ,availableClass : 'green'},
-        { id: 'conferenceRoom2', name: 'Conference Room 2' ,availableClass : 'green'},
-        { id: 'conferenceRoom3', name: 'Conference Room 3' ,availableClass : 'green'},
-        {id: 'phoneBooth1' , name: 'Phone Booth 1',availableClass : 'green'},
-        {id: 'phoneBooth2', name: 'Phone Booth 2',availableClass : 'green'}
-    
-      ]
 
-    }
-  
-
-
-  
-  meetingRoomID: string = ''
   title: string = 'Angular Calendar Scheduler Demo';
 
   CalendarView = CalendarView;
@@ -125,6 +99,8 @@ export class AppComponent implements OnInit {
 
   @ViewChild(CalendarSchedulerViewComponent)
   calendarScheduler: CalendarSchedulerViewComponent;
+  meetingRoomID: any;
+  allLocalData
 
   constructor(
     @Inject(LOCALE_ID) locale: string,
@@ -154,36 +130,24 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.setMeetingRoom('conferenceRoom1');
-
-  // Initialize the booking form
-  this.bookingForm = this.fb.group({
-    date: ['', [Validators.required, this.validateDate]],
-    starttime: ['', Validators.required],
-    endtime: ['', Validators.required],
-    room: ['', Validators.required],
-    description: ['', Validators.required],
-  });
-
-  // Ensure meetingRoomID is set before subscribing
-  if (this.meetingRoomID) {
-    this.appService.getEvents(this.meetingRoomID)
-      .subscribe(
-        (events: CalendarSchedulerEvent[]) => (this.events = events),
-        (error) => console.error('Error fetching events:', error)
-      );
-  } else {
-    console.error('Meeting room ID is not set.');
-  }
+    this.setMeetingRoomID('conferenceRoom1')
+    // this.allLocalData = this.appService.getAllLocalStorageData();
+    // this.appService.categorizeEvents(this.allLocalData,new Date())
+    this.bookingForm = this.fb.group({
+      date: ['', [Validators.required, this.validateDate]],
+      starttime: ['', Validators.required],
+      endtime:['', Validators.required],
+      room: ['', Validators.required],
+      description: ['', Validators.required],
+    });
+    this.appService
+      .getEvents('conferenceRoom1')
+      .subscribe((events: CalendarSchedulerEvent[]) => (this.events = events));
   }
 
   validateDate(control: any): { [key: string]: boolean } | null {
     const currentDate = new Date();
-    console.log('curr date' , currentDate);
-    
     const selectedDate = new Date(control.value);
-    console.log('selected date' , selectedDate);
-    
     const twoWeeksLater = new Date(
       currentDate.getTime() + 14 * 24 * 60 * 60 * 1000
     );
@@ -196,46 +160,50 @@ export class AppComponent implements OnInit {
   }
 
   onSubmit(): void {
+    let data = this.bookingForm.value
+    
     if (this.bookingForm.valid) {
-      this.appService.addEvents(this.meetingRoomID,this.bookingForm.value);
+      console.log('test', data);
+      this.appService.addEvents(data , this.meetingRoomID);
+      alert(JSON.stringify('Meeting Room booked'));
+   
+      
       this.appService
-     this.refreshCalender();
-      alert('Meeting Room Booked')
-      this.bookingForm.reset();
+      .getEvents(this.meetingRoomID)
+      .subscribe((events: CalendarSchedulerEvent[]) => {
+        this.events = events;
+        this.refresh.next();
+        this.bookingForm.reset();
+        // this.allLocalData = this.appService.getAllLocalStorageData();
+        // let cat = this.appService.categorizeEvents(this.allLocalData,new Date(data.starttime),new Date(data.endtime))
+        // console.log('category data' , cat)
+      }
+       
+      
+      );
+     
+    
     }
   }
 
-
-  setMeetingRoom(id){
-    this.meetingRoomID = id
+  setMeetingRoomID(id){
+      this.meetingRoomID = id
   }
 
-  refreshCalender():void{
+  viewRoomSchedule(meetingRoomID){
+    this.setMeetingRoomID(meetingRoomID)
     this.appService
-    .getEvents(this.meetingRoomID)
-    .subscribe((events: CalendarSchedulerEvent[]) => {
-      this.events = events
-      this.refresh.next();
-    });
-  }
-
-  setFloor(floorNumber){
-    this.selectedFloor = floorNumber;
-    this.refreshCalender();
-
-  }
-  viewRoomSchedule(meetingId): void{
-    this.setMeetingRoom(meetingId);
-    this.appService
-    .getEvents(meetingId)
+    .getEvents(meetingRoomID)
     .subscribe((events: CalendarSchedulerEvent[]) => (this.events = events));
-    this.refresh.next();
+    this.refresh.next()
+    this.bookingForm.reset();
   }
+  
 
   viewDaysOptionChanged(viewDays: number): void {
     console.log('viewDaysOptionChanged', viewDays);
     this.calendarScheduler.setViewDays(viewDays);
-  } 
+  }
 
   changeDate(date: Date): void {
     console.log('changeDate', date);
